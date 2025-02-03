@@ -15,9 +15,11 @@ public class AccountData {
 	private long id;
 	private String instanceId;
 	private String accountNumber;
-	private double accountValue;
+	private long accountValue;
 	private String assignedGroup;
 	private String assignedUser;
+	private String status;
+	private String taskId;
 	
 	
 }

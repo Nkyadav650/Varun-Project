@@ -1,8 +1,12 @@
 package com.example.controller;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
+import io.camunda.zeebe.client.ZeebeClient;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -19,18 +23,23 @@ import com.example.service.AccountDataService;
 
 @RestController
 @RequestMapping("/api/accounts")
+@Slf4j
 public class AccountDataController {
 
     @Autowired
     private AccountDataService accountDataService;
+
+    @Autowired
+    private ZeebeClient client;
 
     @PostMapping
     public ResponseEntity<AccountData> createAccount(@RequestBody AccountData account) {
         return ResponseEntity.ok(accountDataService.createAccount(account));
     }
 
-    @GetMapping
+    @GetMapping("/get-all-account-data")
     public ResponseEntity<List<AccountData>> getAllAccounts() {
+        log.info("getAllAccounts in account controller entered for fetch all data");
         return ResponseEntity.ok(accountDataService.getAllAccounts());
     }
 
@@ -49,4 +58,17 @@ public class AccountDataController {
         accountDataService.deleteAccount(id);
         return ResponseEntity.noContent().build();
     }
+
+    @PostMapping("/assign-user/{messageName}/{key}/{assinedUserName}")
+    public void assininingMethod(@PathVariable("messageName") String messageName,@PathVariable("key") String key,@PathVariable("assinedUserName") String assinedUserName){
+        log.info("assininingMethod invoked msgName; {} key; ,{} , user; {} : " ,messageName,key,assinedUserName);
+        Map<String,String> map=new HashMap<>();
+        map.put("assignedUserName",assinedUserName);
+        log.info("map user : {}",map);
+        client.newPublishMessageCommand().messageName(messageName).correlationKey(key).variables(map).send().exceptionally(throwable -> {
+            throw new RuntimeException("not started !!");
+        });
+    }
+
+
 }
