@@ -14,6 +14,7 @@ public class GroupTable {
 
     private String groupName;
 
-    @OneToMany(mappedBy = "groups", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToMany(cascade = CascadeType.ALL)
+    @JoinColumn(name = "groupId")
     private List<UserTable> users;
 }
