@@ -3,6 +3,8 @@ package com.example.service;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -20,23 +22,14 @@ public class GroupService {
     // Create operation
     public GroupTable createGroup(GroupTable group) {
         if(groupRepository.existsByGroupName(group.getGroupName())){
-            Optional<GroupTable> byGroupName = groupRepository.findByGroupName(group.getGroupName());
-            if(byGroupName.isPresent()){
-                GroupTable groupTable = byGroupName.get();
-                List<UserTable> groupTableUsers = groupTable.getUsers();
-                List<UserTable> input = group.getUsers();
-                List<UserTable> list = groupTableUsers.parallelStream()
-                        .filter(u -> {
-                            Optional<UserTable> first = input.parallelStream().filter(user -> user.getUserName().equalsIgnoreCase(u.getUserName())).findFirst();
-                            if (first.isPresent()) {
-                                return true;
-                            } else {
-                                return false;
-                            }
-                        }).toList();
-                groupTable.getUsers().addAll(list);
-                return groupRepository.save(groupTable);
-            }
+            GroupTable groupTable = groupRepository.findByGroupName(group.getGroupName()).get();
+            List<UserTable> groupTableUsers = groupTable.getUsers();
+            Set<String> userAlreadyPresent = groupTableUsers.stream().map(u -> u.getUserName())
+                    .collect(Collectors.toSet());
+            List<UserTable> newUsers = group.getUsers().stream().filter(u -> !(userAlreadyPresent.contains(u.getUserName()))).toList();
+            groupTableUsers.addAll(newUsers);
+            groupTable.setUsers(groupTableUsers);
+            return groupRepository.save(groupTable);
         }
         return groupRepository.save(group);
     }
