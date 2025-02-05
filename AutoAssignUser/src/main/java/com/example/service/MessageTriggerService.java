@@ -32,18 +32,18 @@ public class MessageTriggerService {
 
     public String triggerMessage(List<ProcessDetails> processDetailsList){
         for(ProcessDetails processDetails : processDetailsList){
-            String groupName = processDetails.getGroupName();
+            String groupName = processDetails.getAssignedGroup();
             GroupTable group = groupRepository.findByGroupName(groupName).orElseThrow(() -> new RuntimeException("Group name not exist"));
             Optional<UserTable> user = group.getUsers().parallelStream().
                     filter(u -> {
-                        log.info(u.getUserName()+" "+processDetails.getUserName());
-                      return  u.getUserName().equalsIgnoreCase(processDetails.getUserName());
+                        log.info(u.getUserName()+" "+processDetails.getAssignedUser());
+                      return  u.getUserName().equalsIgnoreCase(processDetails.getAssignedUser());
                     }).
                     findFirst();
             if(user.isPresent()){
                 triggerMessageEvent(processDetails);
-                AccountData byInstanceId = repository.findByInstanceId(processDetails.getProcessInstanceId());
-                byInstanceId.setAssignedUser(processDetails.getUserName());
+                AccountData byInstanceId = repository.findByInstanceId(processDetails.getInstanceId());
+                byInstanceId.setAssignedUser(processDetails.getAssignedUser());
                 byInstanceId.setStatus("ASSIGNED");
                 repository.save(byInstanceId);
             }
@@ -55,13 +55,13 @@ public class MessageTriggerService {
     }
 
     private void triggerMessageEvent(ProcessDetails processDetails){
-        String correlationKey = "assignUser "+processDetails.getProcessInstanceId();
+        String correlationKey = "assignUser "+processDetails.getInstanceId();
 
         PublishMessageResponse response = zeebeClient
                 .newPublishMessageCommand()
                 .messageName("assignUser") // Must match the BPMN message name
                 .correlationKey(correlationKey) // This should match the process instance variable
-                .variable("assignedUserName", processDetails.getUserName())
+                .variable("assignedUserName", processDetails.getAssignedUser())
                 .send()
                 .join();
 

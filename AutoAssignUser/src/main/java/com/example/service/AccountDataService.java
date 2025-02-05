@@ -7,6 +7,7 @@ import java.util.Optional;
 
 import io.camunda.zeebe.client.ZeebeClient;
 import io.camunda.zeebe.client.api.response.ActivatedJob;
+import io.camunda.zeebe.client.api.response.CompleteJobResponse;
 import io.camunda.zeebe.spring.client.annotation.JobWorker;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,7 +34,7 @@ public class AccountDataService {
 	// Read operation (Get all accounts)
 	public List<AccountData> getAllAccounts() {
 		log.info("getAllAccounts in account service entered for fetch all data");
-		return accountRepository.findAll();
+		return accountRepository.findAll().stream().filter(u->u.getStatus().equalsIgnoreCase("pending")).toList();
 	}
 
 	// Read operation (Get account by ID)
@@ -92,7 +93,7 @@ public class AccountDataService {
 		Map<String,Object> savedData = new HashMap<>();
 		savedData.put("Saved_data",account);
 
-		zeebeClient.newCompleteCommand(job.getKey())
+		CompleteJobResponse join = zeebeClient.newCompleteCommand(job.getKey())
 				.variables(savedData)
 				.send()
 				.join();

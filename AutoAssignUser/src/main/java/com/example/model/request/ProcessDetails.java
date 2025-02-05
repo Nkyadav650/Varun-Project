@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 @Data
 public class ProcessDetails {
 
-    String processInstanceId;
-    String groupName;
-    String userName;
+    String instanceId;
+    String assignedGroup;
+    String assignedUser;
 }
