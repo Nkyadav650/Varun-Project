@@ -30,7 +30,7 @@ const Task = () => {
         try {
             const response = await axios.get(`${url + process.env.REACT_APP_GET_GROUP_ENDPOINT}`);
             console.log("response group: ", response.data);
-            setGroups(response.data); // Set groups data
+            setGroups(response.data);
         } catch (error) {
             console.error('Error fetching group:', error);
         }
@@ -46,7 +46,7 @@ const Task = () => {
             name: "Select",
             options: {
                 customBodyRender: (value, tableMeta) => {
-                    const rowData = filteredData[tableMeta.rowIndex]; // Use filtered data here
+                    const rowData = filteredData[tableMeta.rowIndex];
                     return (
                         <Checkbox
                             checked={selectedRows.some(selectedRow => JSON.stringify(selectedRow) === JSON.stringify(rowData))}

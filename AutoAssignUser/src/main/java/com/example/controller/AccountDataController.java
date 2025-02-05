@@ -5,18 +5,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import com.example.model.request.ProcessDetails;
+import com.example.service.MessageTriggerService;
 import io.camunda.zeebe.client.ZeebeClient;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import com.example.entity.AccountData;
 import com.example.service.AccountDataService;
@@ -24,6 +19,7 @@ import com.example.service.AccountDataService;
 @RestController
 @RequestMapping("/api/accounts")
 @Slf4j
+@CrossOrigin(origins = "*", allowedHeaders = "*")
 public class AccountDataController {
 
     @Autowired
@@ -31,6 +27,9 @@ public class AccountDataController {
 
     @Autowired
     private ZeebeClient client;
+
+    @Autowired
+    private MessageTriggerService messageTriggerService;
 
     @PostMapping
     public ResponseEntity<AccountData> createAccount(@RequestBody AccountData account) {
@@ -68,6 +67,11 @@ public class AccountDataController {
         client.newPublishMessageCommand().messageName(messageName).correlationKey(key).variables(map).send().exceptionally(throwable -> {
             throw new RuntimeException("not started !!");
         });
+    }
+
+    @PostMapping("/assign/users")
+    public String assignUsers(@RequestBody List<ProcessDetails> processDetails){
+        return messageTriggerService.triggerMessage(processDetails);
     }
 
 

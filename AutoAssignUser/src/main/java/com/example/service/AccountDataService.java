@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import io.camunda.zeebe.client.ZeebeClient;
 import io.camunda.zeebe.client.api.response.ActivatedJob;
 import io.camunda.zeebe.spring.client.annotation.JobWorker;
 import lombok.extern.slf4j.Slf4j;
@@ -20,6 +21,9 @@ public class AccountDataService {
 
 	@Autowired
 	private AccountDataRepository accountRepository;
+
+	@Autowired
+	private ZeebeClient zeebeClient;
 
 	// Create operation
 	public AccountData createAccount(AccountData account) {
@@ -56,8 +60,8 @@ public class AccountDataService {
 
 
 	//saves accountdata requests in db
-	@JobWorker(type="store-data",autoComplete = true)
-	public Map<String,Object> saveAccountRequest(ActivatedJob job){
+	@JobWorker(type="store-data",autoComplete = false)
+	public void saveAccountRequest(ActivatedJob job){
 		log.info("saveAccountRequest entered : {}",job);
 
 		String accountNumber = (String)job.getVariable("accountNumber");
@@ -87,11 +91,13 @@ public class AccountDataService {
 
 		Map<String,Object> savedData = new HashMap<>();
 		savedData.put("Saved_data",account);
-		return savedData;
 
+		zeebeClient.newCompleteCommand(job.getKey())
+				.variables(savedData)
+				.send()
+				.join();
 
-
-
+		log.info("completing job");
 
 	}
 }

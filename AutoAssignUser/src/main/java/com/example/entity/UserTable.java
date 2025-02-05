@@ -14,7 +14,4 @@ public class UserTable {
     private String userName;
     private int taskCount;
 
-    @ManyToOne
-    @JoinColumn(name = "groupId")  // Define foreign key
-    private GroupTable groups;
 }
