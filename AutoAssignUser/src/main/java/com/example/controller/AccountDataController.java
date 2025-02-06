@@ -71,6 +71,7 @@ public class AccountDataController {
 
     @PostMapping("/assign/users")
     public String assignUsers(@RequestBody List<ProcessDetails> processDetails){
+        log.info("processDetails : {}",processDetails);
         return messageTriggerService.triggerMessage(processDetails);
     }
 

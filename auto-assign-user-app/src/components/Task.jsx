@@ -134,6 +134,7 @@ const Task = () => {
         }
         // Optionally, reset selected rows after API call if needed
          setSelectedRows([]);
+         fetchData();
     };
     
 

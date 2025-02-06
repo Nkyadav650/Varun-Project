@@ -31,8 +31,10 @@ public class MessageTriggerService {
     private AccountDataRepository repository;
 
     public String triggerMessage(List<ProcessDetails> processDetailsList){
+        log.info("process details in service : {}",processDetailsList);
         for(ProcessDetails processDetails : processDetailsList){
             String groupName = processDetails.getAssignedGroup();
+            log.info("group name is : {}",groupName);
             GroupTable group = groupRepository.findByGroupName(groupName).orElseThrow(() -> new RuntimeException("Group name not exist"));
             Optional<UserTable> user = group.getUsers().parallelStream().
                     filter(u -> {
