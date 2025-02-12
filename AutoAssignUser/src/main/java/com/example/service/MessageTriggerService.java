@@ -32,25 +32,20 @@ public class MessageTriggerService {
 
     public String triggerMessage(List<ProcessDetails> processDetailsList){
         log.info("process details in service : {}",processDetailsList);
+
         for(ProcessDetails processDetails : processDetailsList){
             String groupName = processDetails.getAssignedGroup();
             log.info("group name is : {}",groupName);
             GroupTable group = groupRepository.findByGroupName(groupName).orElseThrow(() -> new RuntimeException("Group name not exist"));
-            Optional<UserTable> user = group.getUsers().parallelStream().
-                    filter(u -> {
-                        log.info(u.getUserName()+" "+processDetails.getAssignedUser());
-                      return  u.getUserName().equalsIgnoreCase(processDetails.getAssignedUser());
-                    }).
-                    findFirst();
+            Optional<UserTable> user = group.getUsers().stream()
+                    .filter(u -> u.getUserName().equalsIgnoreCase(processDetails.getAssignedUser()))
+                    .findFirst();
             if(user.isPresent()){
                 triggerMessageEvent(processDetails);
                 AccountData byInstanceId = repository.findByInstanceId(processDetails.getInstanceId());
                 byInstanceId.setAssignedUser(processDetails.getAssignedUser());
                 byInstanceId.setStatus("ASSIGNED");
                 repository.save(byInstanceId);
-            }
-            else{
-                throw new RuntimeException("Given user name is not exist please provide correct user name");
             }
         }
         return "success";
@@ -61,13 +56,13 @@ public class MessageTriggerService {
 
         PublishMessageResponse response = zeebeClient
                 .newPublishMessageCommand()
-                .messageName("assignUser") // Must match the BPMN message name
-                .correlationKey(correlationKey) // This should match the process instance variable
+                .messageName("assignUser")
+                .correlationKey(correlationKey)
                 .variable("assignedUserName", processDetails.getAssignedUser())
                 .send()
                 .join();
 
-        log.info("Message triggered successfully");
+        log.info("Message triggered successfully for message key - {}", response.getMessageKey());
 
     }
 

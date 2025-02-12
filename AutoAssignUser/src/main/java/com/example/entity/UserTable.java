@@ -10,7 +10,6 @@ public class UserTable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long userId;
-
     private String userName;
     private int taskCount;
 

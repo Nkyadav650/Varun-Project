@@ -20,7 +20,6 @@ public class GroupController {
 
     @PostMapping
     public ResponseEntity<GroupTable> createGroup(@RequestBody GroupTable group) {
-
         return ResponseEntity.ok(groupService.createGroup(group));
     }
 

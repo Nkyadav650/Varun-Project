@@ -26,10 +26,9 @@ public class AccountDataService {
 	@Autowired
 	private ZeebeClient zeebeClient;
 
-	// Create operation
-	public AccountData createAccount(AccountData account) {
-		return accountRepository.save(account);
-	}
+	private final String SOURCE_TABLE = "account_data";
+	private final String TARGET_TABLE = "account_data_archival";
+
 
 	// Read operation (Get all accounts)
 	public List<AccountData> getAllAccounts() {
@@ -37,30 +36,11 @@ public class AccountDataService {
 		return accountRepository.findAll().stream().filter(u->u.getStatus().equalsIgnoreCase("pending")).toList();
 	}
 
-	// Read operation (Get account by ID)
-	public Optional<AccountData> getAccountById(Long id) {
-		return accountRepository.findById(id);
+	public void moveToArchival(String processInstanceId){
+		log.info("Calling moveToArchival for Account_Data");
+		accountRepository.moveToArchival(SOURCE_TABLE,TARGET_TABLE,processInstanceId);
 	}
 
-	// Update operation
-	public AccountData updateAccount(Long id, AccountData accountDetails) {
-		return accountRepository.findById(id).map(account -> {
-			account.setAssignedGroup(accountDetails.getAssignedGroup());
-			account.setAccountNumber(accountDetails.getAccountNumber());
-			account.setAssignedUser(accountDetails.getAssignedUser());
-			return accountRepository.save(account);
-		}).orElseThrow(() -> new RuntimeException("Account not found"));
-	}
-
-	// Delete operation
-	public void deleteAccount(Long id) {
-		accountRepository.deleteById(id);
-	}
-
-
-
-
-	//saves accountdata requests in db
 	@JobWorker(type="store-data",autoComplete = false)
 	public void saveAccountRequest(ActivatedJob job){
 		log.info("saveAccountRequest entered : {}",job);
@@ -88,13 +68,12 @@ public class AccountDataService {
 		log.info("accountdata : {}",accountData);
 
 		//database calling method invoke for save
-		AccountData account = createAccount(accountData);
+		AccountData account = accountRepository.save(accountData);
 
 		Map<String,Object> savedData = new HashMap<>();
 		savedData.put("Saved_data",account);
 
 		CompleteJobResponse join = zeebeClient.newCompleteCommand(job.getKey())
-				.variables(savedData)
 				.send()
 				.join();
 
